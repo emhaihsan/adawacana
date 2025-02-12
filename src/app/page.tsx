@@ -1,19 +1,14 @@
-'use client';
+"use client";
 
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useWalletStatus } from "@/hooks/useWalletStatus";
 import Image from "next/image";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Home() {
+  const { isConnected } = useWalletStatus();
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black">
-      {/* Header dengan Connect Wallet */}
-      <div className="absolute top-0 right-0 p-4">
-        <ConnectButton 
-          showBalance={false}
-          accountStatus="address"
-        />
-      </div>
-
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="flex flex-col items-center justify-center text-center">
@@ -24,37 +19,51 @@ export default function Home() {
             Turn Your Laziness Into Other's Happiness
           </p>
           <p className="text-xl text-gray-300 max-w-2xl mb-12">
-            Create commitments, set goals, and transform missed deadlines into charitable donations. 
-            Your procrastination now has a silver lining.
+            Create commitments, set goals, and transform missed deadlines into
+            charitable donations. Your procrastination now has a silver lining.
           </p>
-          <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:opacity-90 transition-all">
-            Start Your Journey
-          </button>
+
+          {!isConnected && (
+            <div className="text-center">
+              <p className="text-white mb-4">
+                Connect your wallet to get started
+              </p>
+              <ConnectButton showBalance={false} accountStatus="address" />
+            </div>
+          )}
         </div>
 
         {/* Features Section */}
         <div className="grid md:grid-cols-3 gap-8 mt-20">
           <div className="bg-purple-900/20 p-8 rounded-2xl backdrop-blur-sm border border-purple-500/20">
             <div className="text-purple-400 text-4xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold text-white mb-4">Set Your Goals</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Set Your Goals
+            </h3>
             <p className="text-gray-300">
-              Create your commitment and set a deadline. Define your stake in case you miss it.
+              Create your commitment and set a deadline. Define your stake in
+              case you miss it.
             </p>
           </div>
-          
+
           <div className="bg-purple-900/20 p-8 rounded-2xl backdrop-blur-sm border border-purple-500/20">
             <div className="text-purple-400 text-4xl mb-4">👥</div>
-            <h3 className="text-xl font-semibold text-white mb-4">Choose Verifier</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Choose Verifier
+            </h3>
             <p className="text-gray-300">
               Select a friend to verify your progress and hold you accountable.
             </p>
           </div>
-          
+
           <div className="bg-purple-900/20 p-8 rounded-2xl backdrop-blur-sm border border-purple-500/20">
             <div className="text-purple-400 text-4xl mb-4">🎁</div>
-            <h3 className="text-xl font-semibold text-white mb-4">Make Impact</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Make Impact
+            </h3>
             <p className="text-gray-300">
-              Missed deadlines transform into charitable donations, making every outcome meaningful.
+              Missed deadlines transform into charitable donations, making every
+              outcome meaningful.
             </p>
           </div>
         </div>
@@ -70,5 +79,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }
