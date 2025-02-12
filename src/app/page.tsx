@@ -1,8 +1,19 @@
+'use client';
+
 import Image from "next/image";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black">
+      {/* Header dengan Connect Wallet */}
+      <div className="absolute top-0 right-0 p-4">
+        <ConnectButton 
+          showBalance={false}
+          accountStatus="address"
+        />
+      </div>
+
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="flex flex-col items-center justify-center text-center">
