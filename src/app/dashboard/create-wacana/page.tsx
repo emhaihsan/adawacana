@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Navbar from "@/components/Navbar";
 
 export default function CreateWacana() {
   const { isConnected, address } = useAccount();
@@ -42,11 +43,12 @@ export default function CreateWacana() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black text-white">
+      <Navbar />
       <div className="container mx-auto max-w-4xl px-4 py-12">
-        {/* Header dengan Connect Wallet */}
+        {/* Header dengan Connect Wallet
         <div className="flex justify-end mb-8">
           <ConnectButton showBalance={false} accountStatus="address" />
-        </div>
+        </div> */}
 
         <div className="bg-purple-900/30 border border-purple-500/20 rounded-3xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
