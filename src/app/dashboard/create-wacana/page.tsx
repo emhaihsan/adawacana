@@ -7,7 +7,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Navbar from "@/components/Navbar";
 
 export default function CreateWacana() {
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
   const router = useRouter();
 
   const [wacanaTitle, setWacanaTitle] = useState("");
@@ -32,9 +32,9 @@ export default function CreateWacana() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white mb-4">Please connect your wallet first</p>
+          <p className="text-gray-300 mb-4">Please connect your wallet first</p>
           <ConnectButton />
         </div>
       </div>
@@ -42,132 +42,114 @@ export default function CreateWacana() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black text-white">
+    <div className="min-h-screen bg-gray-900">
       <Navbar />
-      <div className="container mx-auto max-w-4xl px-4 py-12">
-        {/* Header dengan Connect Wallet
-        <div className="flex justify-end mb-8">
-          <ConnectButton showBalance={false} accountStatus="address" />
-        </div> */}
+      <main className="container mx-auto max-w-2xl px-4 py-8">
+        <h1 className="text-3xl font-bold text-white mb-8">
+          Create New Wacana
+        </h1>
 
-        <div className="bg-purple-900/30 border border-purple-500/20 rounded-3xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
-            <h1 className="text-3xl font-bold text-white flex items-center">
-              📝 Buat Wacana Baru
-            </h1>
-            <p className="text-purple-100 mt-2">
-              Tentukan komitmen Anda dan transformasikan prokrastinasi menjadi
-              dampak positif
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="space-y-4">
               <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-300 mb-2 flex items-center"
-                >
-                  👤 Judul Wacana
+                <label htmlFor="title" className="block text-gray-300 mb-2">
+                  Title
                 </label>
                 <input
                   type="text"
                   id="title"
                   value={wacanaTitle}
                   onChange={(e) => setWacanaTitle(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="What do you want to achieve?"
                   required
-                  className="w-full bg-purple-900/50 border border-purple-500/30 rounded-xl p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                  placeholder="Apa wacana Anda?"
                 />
               </div>
 
               <div>
                 <label
-                  htmlFor="targetDateTime"
-                  className="block text-sm font-medium text-gray-300 mb-2 flex items-center"
+                  htmlFor="description"
+                  className="block text-gray-300 mb-2"
                 >
-                  📅 Tanggal & Waktu Target
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  rows={4}
+                  placeholder="Describe your commitment in detail"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="deadline" className="block text-gray-300 mb-2">
+                  Target Date & Time
                 </label>
                 <input
                   type="datetime-local"
-                  id="targetDateTime"
+                  id="deadline"
                   value={targetDateTime}
                   onChange={(e) => setTargetDateTime(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   required
-                  className="w-full bg-purple-900/50 border border-purple-500/30 rounded-xl p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
                 />
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-300 mb-2 flex items-center"
-              >
-                📖 Deskripsi Wacana
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                rows={4}
-                className="w-full bg-purple-900/50 border border-purple-500/30 rounded-xl p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                placeholder="Jelaskan detail wacana Anda secara komprehensif"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label
-                  htmlFor="donationAmount"
-                  className="block text-sm font-medium text-gray-300 mb-2 flex items-center"
-                >
-                  💰 Jumlah Donasi (ETH)
+                <label htmlFor="amount" className="block text-gray-300 mb-2">
+                  Donation Amount (ETH)
                 </label>
                 <input
                   type="number"
-                  id="donationAmount"
+                  id="amount"
                   value={donationAmount}
                   onChange={(e) => setDonationAmount(e.target.value)}
-                  required
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="0.1"
                   step="0.01"
                   min="0"
-                  className="w-full bg-purple-900/50 border border-purple-500/30 rounded-xl p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                  placeholder="Berapa ETH yang dipertaruhkan"
+                  required
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="verifierAddress"
-                  className="block text-sm font-medium text-gray-300 mb-2 flex items-center"
-                >
-                  👥 Alamat Wallet Verifikator
+                <label htmlFor="verifier" className="block text-gray-300 mb-2">
+                  Verifier Address
                 </label>
                 <input
                   type="text"
-                  id="verifierAddress"
+                  id="verifier"
                   value={verifierAddress}
                   onChange={(e) => setVerifierAddress(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="0x..."
                   required
-                  className="w-full bg-purple-900/50 border border-purple-500/30 rounded-xl p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                  placeholder="Alamat wallet teman Anda"
                 />
               </div>
             </div>
+          </div>
 
-            <div className="pt-4">
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl hover:opacity-90 transition-all font-semibold text-lg shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1"
-              >
-                Buat Wacana Sekarang
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </main>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Create Wacana
+            </button>
+          </div>
+        </form>
+      </main>
+    </div>
   );
 }

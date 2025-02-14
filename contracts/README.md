@@ -1,66 +1,110 @@
-## Foundry
+# AdaWacana Smart Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This directory contains the smart contracts for the AdaWacana platform, a Web3 commitment system with charitable donations.
 
-Foundry consists of:
+## Contract Overview
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### AdaWacana.sol
 
-## Documentation
+The main contract that handles:
+- Wacana (commitment) creation and management
+- Stake handling and verification
+- Automatic charitable donations for failed commitments
+- Event emissions for frontend integration
 
-https://book.getfoundry.sh/
+## Key Features
 
-## Usage
+- **Commitment Creation**: Users can create commitments with ETH stakes
+- **Verification System**: Trusted verifiers confirm completion
+- **Automatic Donations**: Failed commitments trigger automatic donations
+- **Security Features**: 
+  - Reentrancy protection
+  - Pausable functionality
+  - Role-based access control
+  - Secure withdrawal patterns
 
-### Build
+## Development
 
-```shell
-$ forge build
+### Prerequisites
+
+- Foundry
+- Solidity ^0.8.19
+
+### Installation
+
+```bash
+forge install
 ```
 
-### Test
+### Testing
 
-```shell
-$ forge test
+```bash
+# Run all tests
+forge test
+
+# Run tests with gas reporting
+forge test --gas-report
+
+# Run specific test
+forge test --match-test testFunctionName
 ```
 
-### Format
+### Deployment
 
-```shell
-$ forge fmt
+1. Set up environment variables:
+```bash
+cp .env.example .env
+# Add your private key and RPC URLs
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
+2. Deploy to network:
+```bash
+forge script script/Deploy.s.sol --rpc-url <RPC_URL> --broadcast
 ```
 
-### Anvil
+## Contract Architecture
 
-```shell
-$ anvil
-```
+### State Variables
 
-### Deploy
+- `minimumStake`: Minimum ETH required for commitment
+- `wacanas`: Mapping of wacana IDs to their data
+- `userWacanas`: Mapping of user addresses to their wacana IDs
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+### Key Functions
 
-### Cast
+- `createWacana()`: Create new commitment
+- `confirmCompletion()`: Verify commitment completion
+- `selfReportFailure()`: Report own failure
+- `processTimeout()`: Handle expired commitments
 
-```shell
-$ cast <subcommand>
-```
+### Events
 
-### Help
+- `WacanaCreated`
+- `CreatorConfirmed`
+- `VerifierConfirmed`
+- `WacanaCompleted`
+- `WacanaFailed`
+- `SelfReportFailed`
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+## Security Considerations
+
+- All functions are protected against reentrancy
+- Timelock for important parameter changes
+- Emergency pause functionality
+- Comprehensive test coverage
+
+## Gas Optimization
+
+- Efficient storage packing
+- Minimal storage operations
+- Optimized loops and calculations
+- IR-based optimization enabled
+
+## Testing
+
+The test suite covers:
+- Commitment creation and management
+- Verification flows
+- Failure scenarios
+- Edge cases and restrictions
+- Gas optimization

@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AdaWacana
+
+AdaWacana is a Web3 commitment platform that helps users achieve their goals by adding financial stakes. When users fail to meet their commitments, the staked amount is automatically donated to charity, turning procrastination into positive impact.
+
+## Features
+
+- **Create Commitments**: Set goals with deadlines and stake ETH as motivation
+- **Verifier System**: Choose trusted friends to verify your commitment completion
+- **Charitable Impact**: Failed commitments automatically donate to charity
+- **Smart Contract Security**: Built with secure and audited smart contracts
+- **Web3 Integration**: Seamless wallet connection and transaction handling
+- **Responsive Design**: Works perfectly on both desktop and mobile devices
+
+## Tech Stack
+
+- **Frontend**:
+
+  - Next.js 14 (App Router)
+  - TailwindCSS
+  - RainbowKit (Wallet Connection)
+  - Wagmi (Ethereum Interactions)
+
+- **Smart Contracts**:
+  - Solidity
+  - Foundry (Development & Testing)
+  - OpenZeppelin (Security Standards)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 16+
+- Yarn/NPM
+- Foundry (for smart contract development)
+
+### Installation
+
+1. Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/adawacana.git
+cd adawacana
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install frontend dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Install smart contract dependencies:
 
-## Learn More
+```bash
+cd contracts
+forge install
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Create a `.env` file based on `.env.example`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Development
 
-## Deploy on Vercel
+1. Start the frontend development server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+yarn dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. For smart contract development:
+
+```bash
+cd contracts
+forge test    # Run tests
+forge build   # Build contracts
+```
+
+## Project Structure
+
+```
+adawacana/
+├── src/                    # Frontend source code
+│   ├── app/               # Next.js app router pages
+│   ├── components/        # React components
+│   └── contracts/        # Contract ABIs and addresses
+├── contracts/             # Smart contract source code
+│   ├── src/              # Contract implementations
+│   └── test/             # Contract tests
+└── public/               # Static assets
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

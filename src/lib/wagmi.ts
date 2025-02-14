@@ -1,6 +1,32 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 
-const mantaPacific: any = {
+type ChainConfig = {
+  id: number;
+  name: string;
+  network: string;
+  nativeCurrency: {
+    decimals: number;
+    name: string;
+    symbol: string;
+  };
+  rpcUrls: {
+    default: {
+      http: string[];
+    };
+    public: {
+      http: string[];
+    };
+  };
+  blockExplorers: {
+    default: {
+      name: string;
+      url: string;
+    };
+  };
+  testnet: boolean;
+};
+
+const mantaPacific: ChainConfig = {
   id: 169,
   name: 'Manta Pacific',
   network: 'manta-pacific',
@@ -26,7 +52,7 @@ const mantaPacific: any = {
   testnet: false,
 };
 
-const mantaPacificTestnet: any = {
+const mantaPacificTestnet: ChainConfig = {
   id: 3441006,
   name: 'Manta Pacific Sepolia Testnet',
   network: 'manta-pacific-testnet',

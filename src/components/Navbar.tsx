@@ -1,95 +1,127 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-
-const NavItem = ({ href, children, isActive }: { 
-  href: string, 
-  children: React.ReactNode, 
-  isActive?: boolean 
-}) => (
-  <Link 
-    href={href} 
-    className={`
-      px-4 py-2 rounded-xl transition-all duration-300 
-      ${isActive 
-        ? 'bg-purple-600 text-white' 
-        : 'text-purple-200 hover:bg-purple-700/30 hover:text-white'
-      }
-    `}
-  >
-    {children}
-  </Link>
-);
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
 
-  const navItems = [
-    { href: '/dashboard', label: '🏠 Dashboard' },
-    { href: '/dashboard/create-wacana', label: '✍️ Buat Wacana' },
-    { href: '/dashboard/active-wacana', label: '🎯 Wacana Aktif' },
-    { href: '/dashboard/history', label: '📜 Riwayat' }
-  ];
+  const isActive = (path: string) => {
+    return pathname === path ? "bg-gray-800" : "";
+  };
 
   return (
-    <nav className="bg-purple-900/50 backdrop-blur-md border-b border-purple-500/20 sticky top-0 z-50">
-      <div className="container mx-auto max-w-6xl px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <Link 
-            href="/dashboard" 
-            className="text-2xl font-bold text-white flex items-center"
-          >
-            🌟 AdaWacana
+    <nav className="bg-gray-900 border-b border-gray-800">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo dan Brand */}
+          <Link href="/dashboard" className="flex items-center space-x-3">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text">
+              AdaWacana
+            </span>
           </Link>
-          <div className="hidden md:flex space-x-2 ml-6">
-            {navItems.map((item) => (
-              <NavItem 
-                key={item.href} 
-                href={item.href} 
-                isActive={pathname === item.href}
-              >
-                {item.label}
-              </NavItem>
-            ))}
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center space-x-1">
+            <Link
+              href="/dashboard"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard"
+              )}`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/create-wacana"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/create-wacana"
+              )}`}
+            >
+              Buat Wacana
+            </Link>
+            <Link
+              href="/dashboard/active-wacana"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/active-wacana"
+              )}`}
+            >
+              Wacana Aktif
+            </Link>
+            <Link
+              href="/dashboard/validate"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/validate"
+              )}`}
+            >
+              Validasi
+            </Link>
+            <Link
+              href="/dashboard/history"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/history"
+              )}`}
+            >
+              Riwayat
+            </Link>
           </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="hidden md:block">
-            <ConnectButton 
-              showBalance={false} 
-              accountStatus="address" 
+
+          {/* Connect Wallet Button */}
+          <div className="flex items-center">
+            <ConnectButton
+              chainStatus="icon"
+              showBalance={false}
+              accountStatus={{
+                smallScreen: "avatar",
+                largeScreen: "full",
+              }}
             />
           </div>
-          <div className="md:hidden">
-            <button 
-              className="text-white bg-purple-600 p-2 rounded-lg"
-              aria-label="Menu"
-            >
-              ☰
-            </button>
-          </div>
         </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      <div className="md:hidden bg-purple-900/80 py-4">
-        <div className="container mx-auto px-4 space-y-2">
-          {navItems.map((item) => (
-            <NavItem 
-              key={item.href} 
-              href={item.href} 
-              isActive={pathname === item.href}
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden pb-4">
+          <div className="flex flex-col space-y-2">
+            <Link
+              href="/dashboard"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard"
+              )}`}
             >
-              {item.label}
-            </NavItem>
-          ))}
-          <div className="pt-2">
-            <ConnectButton 
-              showBalance={false} 
-              accountStatus="address" 
-            />
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/create-wacana"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/create-wacana"
+              )}`}
+            >
+              Buat Wacana
+            </Link>
+            <Link
+              href="/dashboard/active-wacana"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/active-wacana"
+              )}`}
+            >
+              Wacana Aktif
+            </Link>
+            <Link
+              href="/dashboard/validate"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/validate"
+              )}`}
+            >
+              Validasi
+            </Link>
+            <Link
+              href="/dashboard/history"
+              className={`px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors ${isActive(
+                "/dashboard/history"
+              )}`}
+            >
+              Riwayat
+            </Link>
           </div>
         </div>
       </div>
