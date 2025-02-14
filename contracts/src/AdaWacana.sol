@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -12,23 +12,23 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
     // Struct untuk menyimpan data wacana
     struct Wacana {
-        address creator;        // Pembuat wacana
-        address verifier;       // Verifikator yang ditunjuk
-        uint256 deadline;       // Batas waktu penyelesaian
-        uint256 stake;         // Jumlah ETH yang dipertaruhkan
-        string title;          // Judul wacana
-        string description;    // Deskripsi wacana
-        WacanaStatus status;   // Status wacana
-        uint256 createdAt;     // Waktu pembuatan
-        uint256 completedAt;   // Waktu penyelesaian
+        address creator; // Pembuat wacana
+        address verifier; // Verifikator yang ditunjuk
+        uint256 deadline; // Batas waktu penyelesaian
+        uint256 stake; // Jumlah ETH yang dipertaruhkan
+        string title; // Judul wacana
+        string description; // Deskripsi wacana
+        WacanaStatus status; // Status wacana
+        uint256 createdAt; // Waktu pembuatan
+        uint256 completedAt; // Waktu penyelesaian
     }
 
     // Enum untuk status wacana
     enum WacanaStatus {
-        Active,     // Wacana sedang berjalan
-        Completed,  // Wacana berhasil diselesaikan
-        Failed,     // Wacana gagal dan donasi dikirim
-        Cancelled   // Wacana dibatalkan (hanya jika verifier belum dikonfirmasi)
+        Active, // Wacana sedang berjalan
+        Completed, // Wacana berhasil diselesaikan
+        Failed, // Wacana gagal dan donasi dikirim
+        Cancelled // Wacana dibatalkan (hanya jika verifier belum dikonfirmasi)
     }
 
     // Events
@@ -39,7 +39,7 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         uint256 deadline,
         uint256 stake
     );
-    
+
     event WacanaVerified(uint256 indexed wacanaId, address indexed verifier);
     event WacanaCompleted(uint256 indexed wacanaId);
     event WacanaFailed(uint256 indexed wacanaId, address indexed charity);
@@ -67,12 +67,18 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
     }
 
     modifier wacanaExists(uint256 _wacanaId) {
-        require(wacanas[_wacanaId].creator != address(0), "Wacana does not exist");
+        require(
+            wacanas[_wacanaId].creator != address(0),
+            "Wacana does not exist"
+        );
         _;
     }
 
     modifier wacanaActive(uint256 _wacanaId) {
-        require(wacanas[_wacanaId].status == WacanaStatus.Active, "Wacana not active");
+        require(
+            wacanas[_wacanaId].status == WacanaStatus.Active,
+            "Wacana not active"
+        );
         _;
     }
 
@@ -81,7 +87,11 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @param _charityAddress Alamat charity default
      * @param _minimumStake Minimum stake dalam wei
      */
-    constructor(address _charityAddress, uint256 _minimumStake) {
+    constructor(
+        address initialOwner,
+        address _charityAddress,
+        uint256 _minimumStake
+    ) Ownable(initialOwner) {
         require(_charityAddress != address(0), "Invalid charity address");
         charityAddress = _charityAddress;
         minimumStake = _minimumStake;
@@ -121,17 +131,25 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         userWacanas[msg.sender].push(wacanaId);
         verifierWacanas[_verifier].push(wacanaId);
 
-        emit WacanaCreated(wacanaId, msg.sender, _verifier, _deadline, msg.value);
+        emit WacanaCreated(
+            wacanaId,
+            msg.sender,
+            _verifier,
+            _deadline,
+            msg.value
+        );
     }
 
     /**
      * @dev Menandai wacana sebagai selesai
      * @param _wacanaId ID wacana
      */
-    function completeWacana(uint256 _wacanaId) 
-        external 
+    function completeWacana(
+        uint256 _wacanaId
+    )
+        external
         whenNotPaused
-        nonReentrant 
+        nonReentrant
         wacanaExists(_wacanaId)
         wacanaActive(_wacanaId)
         onlyVerifier(_wacanaId)
@@ -151,7 +169,9 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Menandai wacana sebagai gagal
      * @param _wacanaId ID wacana
      */
-    function failWacana(uint256 _wacanaId)
+    function failWacana(
+        uint256 _wacanaId
+    )
         external
         whenNotPaused
         nonReentrant
@@ -176,7 +196,9 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Membatalkan wacana yang belum diverifikasi
      * @param _wacanaId ID wacana
      */
-    function cancelWacana(uint256 _wacanaId)
+    function cancelWacana(
+        uint256 _wacanaId
+    )
         external
         whenNotPaused
         nonReentrant
@@ -198,7 +220,9 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Mengupdate alamat charity
      * @param _newCharityAddress Alamat charity baru
      */
-    function updateCharityAddress(address _newCharityAddress) external onlyOwner {
+    function updateCharityAddress(
+        address _newCharityAddress
+    ) external onlyOwner {
         require(_newCharityAddress != address(0), "Invalid charity address");
         charityAddress = _newCharityAddress;
         emit CharityAddressUpdated(_newCharityAddress);
@@ -217,17 +241,23 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Mendapatkan wacana berdasarkan ID
      * @param _wacanaId ID wacana
      */
-    function getWacana(uint256 _wacanaId) external view returns (
-        address creator,
-        address verifier,
-        uint256 deadline,
-        uint256 stake,
-        string memory title,
-        string memory description,
-        WacanaStatus status,
-        uint256 createdAt,
-        uint256 completedAt
-    ) {
+    function getWacana(
+        uint256 _wacanaId
+    )
+        external
+        view
+        returns (
+            address creator,
+            address verifier,
+            uint256 deadline,
+            uint256 stake,
+            string memory title,
+            string memory description,
+            WacanaStatus status,
+            uint256 createdAt,
+            uint256 completedAt
+        )
+    {
         Wacana memory wacana = wacanas[_wacanaId];
         return (
             wacana.creator,
@@ -246,7 +276,9 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Mendapatkan daftar wacana user
      * @param _user Alamat user
      */
-    function getUserWacanas(address _user) external view returns (uint256[] memory) {
+    function getUserWacanas(
+        address _user
+    ) external view returns (uint256[] memory) {
         return userWacanas[_user];
     }
 
@@ -254,7 +286,9 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
      * @dev Mendapatkan daftar wacana yang perlu diverifikasi
      * @param _verifier Alamat verifikator
      */
-    function getVerifierWacanas(address _verifier) external view returns (uint256[] memory) {
+    function getVerifierWacanas(
+        address _verifier
+    ) external view returns (uint256[] memory) {
         return verifierWacanas[_verifier];
     }
 
