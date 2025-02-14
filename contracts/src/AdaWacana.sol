@@ -7,28 +7,28 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title AdaWacana
- * @dev A smart contract for managing commitments (wacana) with financial stakes
+ * @dev Contract untuk mengelola wishlist (wacana) dengan stake donasi
  */
 contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
-    // Struct untuk menyimpan data wacana
     struct Wacana {
         address creator; // Pembuat wacana
-        address verifier; // Verifikator yang ditunjuk
+        address verifier; // Validator yang ditunjuk
         uint256 deadline; // Batas waktu penyelesaian
         uint256 stake; // Jumlah ETH yang dipertaruhkan
         string title; // Judul wacana
         string description; // Deskripsi wacana
         WacanaStatus status; // Status wacana
+        bool creatorConfirmed; // Konfirmasi dari creator
+        bool verifierConfirmed; // Konfirmasi dari validator
         uint256 createdAt; // Waktu pembuatan
         uint256 completedAt; // Waktu penyelesaian
     }
 
-    // Enum untuk status wacana
     enum WacanaStatus {
         Active, // Wacana sedang berjalan
-        Completed, // Wacana berhasil diselesaikan
-        Failed, // Wacana gagal dan donasi dikirim
-        Cancelled // Wacana dibatalkan (hanya jika verifier belum dikonfirmasi)
+        Completed, // Wacana berhasil (dikonfirmasi kedua pihak)
+        Failed, // Wacana gagal (self-report atau timeout)
+        Cancelled // Wacana dibatalkan
     }
 
     // Events
@@ -40,14 +40,15 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         uint256 stake
     );
 
-    event WacanaVerified(uint256 indexed wacanaId, address indexed verifier);
+    event CreatorConfirmed(uint256 indexed wacanaId);
+    event VerifierConfirmed(uint256 indexed wacanaId);
     event WacanaCompleted(uint256 indexed wacanaId);
     event WacanaFailed(uint256 indexed wacanaId, address indexed charity);
     event WacanaCancelled(uint256 indexed wacanaId);
+    event SelfReportFailed(uint256 indexed wacanaId);
     event CharityAddressUpdated(address indexed newCharity);
     event MinimumStakeUpdated(uint256 newMinimumStake);
 
-    // State variables
     uint256 public wacanaCounter;
     uint256 public minimumStake;
     address public charityAddress;
@@ -55,7 +56,6 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
     mapping(address => uint256[]) public userWacanas;
     mapping(address => uint256[]) public verifierWacanas;
 
-    // Modifiers
     modifier onlyCreator(uint256 _wacanaId) {
         require(msg.sender == wacanas[_wacanaId].creator, "Not the creator");
         _;
@@ -82,11 +82,6 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         _;
     }
 
-    /**
-     * @dev Constructor untuk menginisialisasi kontrak
-     * @param _charityAddress Alamat charity default
-     * @param _minimumStake Minimum stake dalam wei
-     */
     constructor(
         address initialOwner,
         address _charityAddress,
@@ -97,13 +92,6 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         minimumStake = _minimumStake;
     }
 
-    /**
-     * @dev Membuat wacana baru
-     * @param _verifier Alamat verifikator
-     * @param _deadline Batas waktu penyelesaian (UNIX timestamp)
-     * @param _title Judul wacana
-     * @param _description Deskripsi wacana
-     */
     function createWacana(
         address _verifier,
         uint256 _deadline,
@@ -126,6 +114,8 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         newWacana.title = _title;
         newWacana.description = _description;
         newWacana.status = WacanaStatus.Active;
+        newWacana.creatorConfirmed = false;
+        newWacana.verifierConfirmed = false;
         newWacana.createdAt = block.timestamp;
 
         userWacanas[msg.sender].push(wacanaId);
@@ -140,11 +130,7 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         );
     }
 
-    /**
-     * @dev Menandai wacana sebagai selesai
-     * @param _wacanaId ID wacana
-     */
-    function completeWacana(
+    function confirmCompletion(
         uint256 _wacanaId
     )
         external
@@ -152,24 +138,38 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         nonReentrant
         wacanaExists(_wacanaId)
         wacanaActive(_wacanaId)
-        onlyVerifier(_wacanaId)
     {
         Wacana storage wacana = wacanas[_wacanaId];
-        wacana.status = WacanaStatus.Completed;
-        wacana.completedAt = block.timestamp;
+        require(block.timestamp <= wacana.deadline, "Deadline passed");
+        require(
+            msg.sender == wacana.creator || msg.sender == wacana.verifier,
+            "Not authorized"
+        );
 
-        // Kembalikan stake ke creator
-        (bool success, ) = wacana.creator.call{value: wacana.stake}("");
-        require(success, "Transfer failed");
+        if (msg.sender == wacana.creator) {
+            require(!wacana.creatorConfirmed, "Already confirmed");
+            wacana.creatorConfirmed = true;
+            emit CreatorConfirmed(_wacanaId);
+        } else {
+            require(!wacana.verifierConfirmed, "Already confirmed");
+            wacana.verifierConfirmed = true;
+            emit VerifierConfirmed(_wacanaId);
+        }
 
-        emit WacanaCompleted(_wacanaId);
+        // Jika kedua pihak sudah konfirmasi, selesaikan wacana
+        if (wacana.creatorConfirmed && wacana.verifierConfirmed) {
+            wacana.status = WacanaStatus.Completed;
+            wacana.completedAt = block.timestamp;
+
+            // Kembalikan stake ke creator
+            (bool success, ) = wacana.creator.call{value: wacana.stake}("");
+            require(success, "Transfer failed");
+
+            emit WacanaCompleted(_wacanaId);
+        }
     }
 
-    /**
-     * @dev Menandai wacana sebagai gagal
-     * @param _wacanaId ID wacana
-     */
-    function failWacana(
+    function selfReportFailure(
         uint256 _wacanaId
     )
         external
@@ -177,10 +177,35 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         nonReentrant
         wacanaExists(_wacanaId)
         wacanaActive(_wacanaId)
-        onlyVerifier(_wacanaId)
+        onlyCreator(_wacanaId)
+    {
+        Wacana storage wacana = wacanas[_wacanaId];
+        wacana.status = WacanaStatus.Failed;
+        wacana.completedAt = block.timestamp;
+
+        // Kirim stake ke charity
+        (bool success, ) = charityAddress.call{value: wacana.stake}("");
+        require(success, "Transfer failed");
+
+        emit SelfReportFailed(_wacanaId);
+        emit WacanaFailed(_wacanaId, charityAddress);
+    }
+
+    function processTimeout(
+        uint256 _wacanaId
+    )
+        external
+        whenNotPaused
+        nonReentrant
+        wacanaExists(_wacanaId)
+        wacanaActive(_wacanaId)
     {
         Wacana storage wacana = wacanas[_wacanaId];
         require(block.timestamp > wacana.deadline, "Deadline not passed");
+        require(
+            !wacana.creatorConfirmed || !wacana.verifierConfirmed,
+            "Already confirmed by both"
+        );
 
         wacana.status = WacanaStatus.Failed;
         wacana.completedAt = block.timestamp;
@@ -192,55 +217,6 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
         emit WacanaFailed(_wacanaId, charityAddress);
     }
 
-    /**
-     * @dev Membatalkan wacana yang belum diverifikasi
-     * @param _wacanaId ID wacana
-     */
-    function cancelWacana(
-        uint256 _wacanaId
-    )
-        external
-        whenNotPaused
-        nonReentrant
-        wacanaExists(_wacanaId)
-        wacanaActive(_wacanaId)
-        onlyCreator(_wacanaId)
-    {
-        Wacana storage wacana = wacanas[_wacanaId];
-        wacana.status = WacanaStatus.Cancelled;
-
-        // Kembalikan stake ke creator
-        (bool success, ) = wacana.creator.call{value: wacana.stake}("");
-        require(success, "Transfer failed");
-
-        emit WacanaCancelled(_wacanaId);
-    }
-
-    /**
-     * @dev Mengupdate alamat charity
-     * @param _newCharityAddress Alamat charity baru
-     */
-    function updateCharityAddress(
-        address _newCharityAddress
-    ) external onlyOwner {
-        require(_newCharityAddress != address(0), "Invalid charity address");
-        charityAddress = _newCharityAddress;
-        emit CharityAddressUpdated(_newCharityAddress);
-    }
-
-    /**
-     * @dev Mengupdate minimum stake
-     * @param _newMinimumStake Minimum stake baru dalam wei
-     */
-    function updateMinimumStake(uint256 _newMinimumStake) external onlyOwner {
-        minimumStake = _newMinimumStake;
-        emit MinimumStakeUpdated(_newMinimumStake);
-    }
-
-    /**
-     * @dev Mendapatkan wacana berdasarkan ID
-     * @param _wacanaId ID wacana
-     */
     function getWacana(
         uint256 _wacanaId
     )
@@ -254,6 +230,8 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
             string memory title,
             string memory description,
             WacanaStatus status,
+            bool creatorConfirmed,
+            bool verifierConfirmed,
             uint256 createdAt,
             uint256 completedAt
         )
@@ -267,41 +245,42 @@ contract AdaWacana is ReentrancyGuard, Pausable, Ownable {
             wacana.title,
             wacana.description,
             wacana.status,
+            wacana.creatorConfirmed,
+            wacana.verifierConfirmed,
             wacana.createdAt,
             wacana.completedAt
         );
     }
 
-    /**
-     * @dev Mendapatkan daftar wacana user
-     * @param _user Alamat user
-     */
     function getUserWacanas(
         address _user
     ) external view returns (uint256[] memory) {
         return userWacanas[_user];
     }
 
-    /**
-     * @dev Mendapatkan daftar wacana yang perlu diverifikasi
-     * @param _verifier Alamat verifikator
-     */
     function getVerifierWacanas(
         address _verifier
     ) external view returns (uint256[] memory) {
         return verifierWacanas[_verifier];
     }
 
-    /**
-     * @dev Pause kontrak
-     */
+    function updateCharityAddress(
+        address _newCharityAddress
+    ) external onlyOwner {
+        require(_newCharityAddress != address(0), "Invalid charity address");
+        charityAddress = _newCharityAddress;
+        emit CharityAddressUpdated(_newCharityAddress);
+    }
+
+    function updateMinimumStake(uint256 _newMinimumStake) external onlyOwner {
+        minimumStake = _newMinimumStake;
+        emit MinimumStakeUpdated(_newMinimumStake);
+    }
+
     function pause() external onlyOwner {
         _pause();
     }
 
-    /**
-     * @dev Unpause kontrak
-     */
     function unpause() external onlyOwner {
         _unpause();
     }

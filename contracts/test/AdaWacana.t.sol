@@ -19,6 +19,11 @@ contract AdaWacanaTest is Test {
         uint256 deadline,
         uint256 stake
     );
+    event CreatorConfirmed(uint256 indexed wacanaId);
+    event VerifierConfirmed(uint256 indexed wacanaId);
+    event WacanaCompleted(uint256 indexed wacanaId);
+    event WacanaFailed(uint256 indexed wacanaId, address indexed charity);
+    event SelfReportFailed(uint256 indexed wacanaId);
 
     function setUp() public {
         owner = makeAddr("owner");
@@ -65,6 +70,8 @@ contract AdaWacanaTest is Test {
             string memory wacanaTitle,
             string memory wacanaDescription,
             AdaWacana.WacanaStatus status,
+            bool creatorConfirmed,
+            bool verifierConfirmed,
             uint256 createdAt,
             uint256 completedAt
         ) = adaWacana.getWacana(0);
@@ -76,8 +83,19 @@ contract AdaWacanaTest is Test {
         assertEq(wacanaTitle, title);
         assertEq(wacanaDescription, description);
         assertEq(uint(status), uint(AdaWacana.WacanaStatus.Active));
+        assertEq(creatorConfirmed, false);
+        assertEq(verifierConfirmed, false);
         assertGt(createdAt, 0);
         assertEq(completedAt, 0);
+
+        // Test wacana tracking
+        uint256[] memory userWacanas = adaWacana.getUserWacanas(user1);
+        uint256[] memory verifierWacanas = adaWacana.getVerifierWacanas(user2);
+
+        assertEq(userWacanas.length, 1);
+        assertEq(verifierWacanas.length, 1);
+        assertEq(userWacanas[0], 0);
+        assertEq(verifierWacanas[0], 0);
     }
 
     function testFail_CreateWacanaWithLowStake() public {
@@ -92,8 +110,8 @@ contract AdaWacanaTest is Test {
         );
     }
 
-    function test_CompleteWacana() public {
-        // First create a wacana
+    function test_SuccessfulCompletion() public {
+        // Setup: Create wacana
         uint256 stake = 0.5 ether;
         vm.deal(user1, stake);
 
@@ -107,9 +125,63 @@ contract AdaWacanaTest is Test {
 
         uint256 initialBalance = user1.balance;
 
-        // Complete the wacana
+        // Creator confirms
+        vm.prank(user1);
+        vm.expectEmit(true, false, false, false);
+        emit CreatorConfirmed(0);
+        adaWacana.confirmCompletion(0);
+
+        // Verifier confirms
         vm.prank(user2);
-        adaWacana.completeWacana(0);
+        vm.expectEmit(true, false, false, false);
+        emit VerifierConfirmed(0);
+        vm.expectEmit(true, false, false, false);
+        emit WacanaCompleted(0);
+        adaWacana.confirmCompletion(0);
+
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            AdaWacana.WacanaStatus status,
+            bool creatorConfirmed,
+            bool verifierConfirmed,
+            ,
+            uint256 completedAt
+        ) = adaWacana.getWacana(0);
+
+        assertEq(uint(status), uint(AdaWacana.WacanaStatus.Completed));
+        assertTrue(creatorConfirmed);
+        assertTrue(verifierConfirmed);
+        assertGt(completedAt, 0);
+        assertEq(user1.balance, initialBalance + stake);
+    }
+
+    function test_SelfReportFailure() public {
+        // Setup: Create wacana
+        uint256 stake = 0.5 ether;
+        vm.deal(user1, stake);
+
+        vm.prank(user1);
+        adaWacana.createWacana{value: stake}(
+            user2,
+            block.timestamp + 7 days,
+            "Test",
+            "Test Description"
+        );
+
+        uint256 initialCharityBalance = charity.balance;
+
+        // Self report failure
+        vm.prank(user1);
+        vm.expectEmit(true, false, false, false);
+        emit SelfReportFailed(0);
+        vm.expectEmit(true, true, false, false);
+        emit WacanaFailed(0, charity);
+        adaWacana.selfReportFailure(0);
 
         (
             ,
@@ -120,16 +192,18 @@ contract AdaWacanaTest is Test {
             ,
             AdaWacana.WacanaStatus status,
             ,
+            ,
+            ,
             uint256 completedAt
         ) = adaWacana.getWacana(0);
 
-        assertEq(uint(status), uint(AdaWacana.WacanaStatus.Completed));
+        assertEq(uint(status), uint(AdaWacana.WacanaStatus.Failed));
         assertGt(completedAt, 0);
-        assertEq(user1.balance, initialBalance + stake);
+        assertEq(charity.balance, initialCharityBalance + stake);
     }
 
-    function test_FailWacana() public {
-        // First create a wacana
+    function test_TimeoutFailure() public {
+        // Setup: Create wacana
         uint256 stake = 0.5 ether;
         vm.deal(user1, stake);
 
@@ -143,12 +217,13 @@ contract AdaWacanaTest is Test {
 
         uint256 initialCharityBalance = charity.balance;
 
-        // Warp time past deadline
+        // Move time past deadline
         vm.warp(block.timestamp + 2 days);
 
-        // Fail the wacana
-        vm.prank(user2);
-        adaWacana.failWacana(0);
+        // Process timeout
+        vm.expectEmit(true, true, false, false);
+        emit WacanaFailed(0, charity);
+        adaWacana.processTimeout(0);
 
         (
             ,
@@ -158,6 +233,8 @@ contract AdaWacanaTest is Test {
             ,
             ,
             AdaWacana.WacanaStatus status,
+            ,
+            ,
             ,
             uint256 completedAt
         ) = adaWacana.getWacana(0);
@@ -167,24 +244,32 @@ contract AdaWacanaTest is Test {
         assertEq(charity.balance, initialCharityBalance + stake);
     }
 
-    function test_CancelWacana() public {
-        // First create a wacana
+    function test_PartialConfirmationTimeout() public {
+        // Setup: Create wacana
         uint256 stake = 0.5 ether;
         vm.deal(user1, stake);
 
         vm.prank(user1);
         adaWacana.createWacana{value: stake}(
             user2,
-            block.timestamp + 7 days,
+            block.timestamp + 1 days,
             "Test",
             "Test Description"
         );
 
-        uint256 initialBalance = user1.balance;
-
-        // Cancel the wacana
+        // Creator confirms but verifier doesn't
         vm.prank(user1);
-        adaWacana.cancelWacana(0);
+        adaWacana.confirmCompletion(0);
+
+        uint256 initialCharityBalance = charity.balance;
+
+        // Move time past deadline
+        vm.warp(block.timestamp + 2 days);
+
+        // Process timeout
+        vm.expectEmit(true, true, false, false);
+        emit WacanaFailed(0, charity);
+        adaWacana.processTimeout(0);
 
         (
             ,
@@ -194,12 +279,38 @@ contract AdaWacanaTest is Test {
             ,
             ,
             AdaWacana.WacanaStatus status,
+            bool creatorConfirmed,
+            bool verifierConfirmed,
             ,
             uint256 completedAt
         ) = adaWacana.getWacana(0);
 
-        assertEq(uint(status), uint(AdaWacana.WacanaStatus.Cancelled));
-        assertEq(user1.balance, initialBalance + stake);
+        assertEq(uint(status), uint(AdaWacana.WacanaStatus.Failed));
+        assertTrue(creatorConfirmed);
+        assertFalse(verifierConfirmed);
+        assertGt(completedAt, 0);
+        assertEq(charity.balance, initialCharityBalance + stake);
+    }
+
+    function testFail_ConfirmAfterDeadline() public {
+        // Setup: Create wacana
+        uint256 stake = 0.5 ether;
+        vm.deal(user1, stake);
+
+        vm.prank(user1);
+        adaWacana.createWacana{value: stake}(
+            user2,
+            block.timestamp + 1 days,
+            "Test",
+            "Test Description"
+        );
+
+        // Move time past deadline
+        vm.warp(block.timestamp + 2 days);
+
+        // Try to confirm after deadline
+        vm.prank(user1);
+        adaWacana.confirmCompletion(0);
     }
 
     function test_UpdateCharityAddress() public {
