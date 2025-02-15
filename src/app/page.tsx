@@ -4,6 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const { isConnected } = useAccount();
@@ -33,12 +34,30 @@ export default function Home() {
 
           {!isConnected && (
             <div className="text-center">
-              <p className="text-gray-300 mb-4">
-                Connect your wallet to get started
-              </p>
               <ConnectButton showBalance={false} accountStatus="address" />
             </div>
           )}
+        </div>
+        <div className="text-center mt-8">
+          <Link
+            href="/whitepaper"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all"
+          >
+            <span>Read our Whitepaper</span>
+            <svg
+              className="w-5 h-5 ml-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </Link>
         </div>
 
         {/* Features Section */}

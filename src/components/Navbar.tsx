@@ -38,7 +38,7 @@ export default function Navbar() {
                 "/dashboard/create-wacana"
               )}`}
             >
-              Buat Wacana
+              Create Commitment
             </Link>
             <Link
               href="/dashboard/active-wacana"
@@ -46,7 +46,7 @@ export default function Navbar() {
                 "/dashboard/active-wacana"
               )}`}
             >
-              Wacana Aktif
+              Active Commitments
             </Link>
             <Link
               href="/dashboard/validate"
@@ -54,7 +54,7 @@ export default function Navbar() {
                 "/dashboard/validate"
               )}`}
             >
-              Validasi
+              Validation
             </Link>
             <Link
               href="/dashboard/history"
@@ -62,7 +62,7 @@ export default function Navbar() {
                 "/dashboard/history"
               )}`}
             >
-              Riwayat
+              History
             </Link>
           </div>
 
